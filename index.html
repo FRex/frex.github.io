@@ -18,66 +18,139 @@
 ul {
     padding-bottom: 2em;
 }
+
+div#pascal:target * > li.pascal {
+    color: orangered;
+}
+
+div#python:target * > li.python {
+    color: orangered;
+}
+
+div#c:target * > li.c {
+    color: orangered;
+}
+
+div#cpp:target * > li.cpp {
+    color: orangered;
+}
+
+div#ccpp:target * > li.ccpp {
+    color: orangered;
+}
+
+div#gui:target * > li.gui {
+    color: orangered;
+}
+
+div#cli:target * > li.cli {
+    color: orangered;
+}
+
+div#haskell:target * > li.haskell {
+    color: orangered;
+}
+
+div#php:target * > li.php {
+    color: orangered;
+}
+
+div#lua:target * > li.lua {
+    color: orangered;
+}
+
+div#lib:target * > li.lib {
+    color: orangered;
+}
+
 </style>
 </head>
 
 <body>
-<div id='mainblock'>
+
+<div id="pascal">
+<div id="python">
+<div id="c">
+<div id="cpp">
+<div id="ccpp">
+<div id="gui">
+<div id="cli">
+<div id="haskell">
+<div id="php">
+<div id="lua">
+<div id="lib">
+
+<div id="mainblock">
+
+Highlight:
+<a href="#gui">GUI</a>
+<a href="#cli">CLI</a>
+<a href="#lib">Lib</a>
+<a href="#c">C</a>
+<a href="#cpp">C++</a>
+<a href="#ccpp">C/C++</a>
+<a href="#python">Python</a>
+<a href="#haskell">Haskell</a>
+<a href="#lua">Lua</a>
+<a href="#pascal">Pascal</a>
+<a href="#php">PHP</a>
+<br/>
+
 My bigger programs and libraries:
 <ul>
-<li><a href="https://github.com/FRex/botes">Botes</a> - a plaintext notetaking GUI app I wrote for personal use (Free Pascal, Lazarus).</li>
-<li><a href="https://github.com/FRex/blaxor">Blaxor</a> - a hex viewer that can handle large files (C++, FLTK).</li>
-<li><a href="https://github.com/FRex/windupfinder">WinDupFinder</a> - Windows-only program to find duplicate files on disks. (C++, WinAPI).</li>
-<li><a href="https://github.com/FRex/zipsavings">zipsavings</a> - show information about archive file's efficiency (Python, calls 7z and my csoinfo executables).</li>
-<li><a href="https://github.com/FRex/viewpic">Viewpic</a> - a simple image viewer (Python3, Qt5, PySide2).</li>
-<li><a href="https://github.com/FRex/LuaConsole">LuaConsole</a> - an in-game style dev console for Lua (C++, SFML, can be easily used with other libs).</li>
-<li><a href="https://github.com/FRex/LuaConsoleProgram">LuaConsoleProgram</a> - example program using above console (C++, SMFL).</li>
+<li class="pascal gui"><a href="https://github.com/FRex/botes">Botes</a> - a plaintext notetaking GUI app I wrote for personal use (Free Pascal, Lazarus).</li>
+<li class="cpp ccpp gui"><a href="https://github.com/FRex/blaxor">Blaxor</a> - a hex viewer that can handle large files (C++, FLTK).</li>
+<li class="cpp ccpp cli"><a href="https://github.com/FRex/windupfinder">WinDupFinder</a> - Windows-only program to find duplicate files on disks. (C++, WinAPI).</li>
+<li class="python cli"><a href="https://github.com/FRex/zipsavings">zipsavings</a> - show information about archive file's efficiency (Python, calls 7z and my csoinfo executables).</li>
+<li class="python gui"><a href="https://github.com/FRex/viewpic">Viewpic</a> - a simple image viewer (Python3, Qt5, PySide2).</li>
+<li class="cpp ccpp lua gui"><a href="https://github.com/FRex/LuaConsole">LuaConsole</a> - an in-game style dev console for Lua (C++, SFML, can be easily used with other libs).</li>
+<li class="cpp ccpp lua gui"><a href="https://github.com/FRex/LuaConsoleProgram">LuaConsoleProgram</a> - example program using above console (C++, SMFL).</li>
 </ul>
 
 
 My self-contained pure C utilities:
 <ul>
-<li><a href="https://github.com/FRex/analyzepng">analyzepng</a> - print information about a PNG file's chunks and such.</li>
-<li><a href="https://github.com/FRex/muhdnscache">muhdnscache</a> - prints contents of your Windows DNS cache using an undocumented function in dnsapi.</li>
-<li><a href="https://github.com/FRex/binarypic">binarypic</a> - convert binary file to/from greyscale PNG to show patterns, swathes of one value, etc. at a glance.</li>
-<li><a href="https://github.com/FRex/topng">topng</a> - convert an image to png (Image Magick and ffmpeg can do the job too if you have them).</li>
-<li><a href="https://github.com/FRex/pixelsum">pixelsum</a> - decode an image file and hash its pixels (to make sure an optimized, etc. image is 100% the same).</li>
-<li><a href="https://github.com/FRex/csoinfo">csoinfo</a> - print info about a CSO file's compression (Windows only, can easily be made cross-platform).</li>
-<li><a href="https://github.com/FRex/bliso">bliso</a> - rip a CD/DVD to an ISO file (direct byte by byte copy, Windows only, use dd on Linux).</li>
-<li><a href="https://github.com/FRex/rampin">rampin</a> - memory maps and touches files to ensure they're cached in RAM (Windows only, for Unix alternative see <a href="https://linux.die.net/man/8/vmtouch">vmtouch</a>).</li>
-<li><a href="https://github.com/FRex/shell">shell</a> - a very minimal Linux/Unix shell, just as the one I once wrote in C class, but this one was written afresh.</li>
-<li><a href="https://github.com/FRex/blawork">blawork</a> - simple API with pure C fallback around few threading APIs to offload one function to a thread.</li>
-<li><a href="https://github.com/FRex/blasha1">blasha1</a> - a pure C SHA1 implementation, made for fun and to learn and experiment.</li>
-<li><a href="https://github.com/FRex/blawmain">blawmain</a> - a header that wraps main/wmain to make it easier to write portable UTF-8 args aware CLI programs.</li>
-<li><a href="https://github.com/FRex/colors">colors</a> - pipe to color same words same colors randomly to make it easier to see common words.</li>
-<li><a href="https://github.com/FRex/snore">snore</a> - a command that works like sleep but prints a dot a second.</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/analyzepng">analyzepng</a> - print information about a PNG file's chunks and such.</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/muhdnscache">muhdnscache</a> - prints contents of your Windows DNS cache using an undocumented function in dnsapi.</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/binarypic">binarypic</a> - convert binary file to/from greyscale PNG to show patterns, swathes of one value, etc. at a glance.</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/topng">topng</a> - convert an image to png (Image Magick and ffmpeg can do the job too if you have them).</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/pixelsum">pixelsum</a> - decode an image file and hash its pixels (to make sure an optimized, etc. image is 100% the same).</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/csoinfo">csoinfo</a> - print info about a CSO file's compression (Windows only, can easily be made cross-platform).</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/bliso">bliso</a> - rip a CD/DVD to an ISO file (direct byte by byte copy, Windows only, use dd on Linux).</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/rampin">rampin</a> - memory maps and touches files to ensure they're cached in RAM (Windows only, for Unix alternative see <a href="https://linux.die.net/man/8/vmtouch">vmtouch</a>).</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/shell">shell</a> - a very minimal Linux/Unix shell, just as the one I once wrote in C class, but this one was written afresh.</li>
+<li class="c ccpp lib"><a href="https://github.com/FRex/blawork">blawork</a> - simple API with pure C fallback around few threading APIs to offload one function to a thread.</li>
+<li class="c ccpp lib"><a href="https://github.com/FRex/blasha1">blasha1</a> - a pure C SHA1 implementation, made for fun and to learn and experiment.</li>
+<li class="c ccpp lib"><a href="https://github.com/FRex/blawmain">blawmain</a> - a header that wraps main/wmain to make it easier to write portable UTF-8 args aware CLI programs.</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/colors">colors</a> - pipe to color same words same colors randomly to make it easier to see common words.</li>
+<li class="c ccpp cli"><a href="https://github.com/FRex/snore">snore</a> - a command that works like sleep but prints a dot a second.</li>
 </ul>
 
 
 Games I've made:
 <ul>
-<li><a href="https://github.com/FRex/Man">Man</a> - clone of PacMan, written for a class (C++, SFML).</li>
-<li><a href="https://frex.itch.io/missles">Missles</a> - clone of classic Missile Command game, written for <a href="https://www.gamedev.net/">gamedev.net</a> 2018 new year challenge (Lua, LOVE2D).</li>
-<li><a href="https://frex.itch.io/routing-game">Routing Game</a> - clone of an old game I had that I forgot the name of (C++, SFML).</li>
-<li><a href="https://github.com/FRex/Heart">Heart</a> - a rythm and color matching game inspired by a YouTube video of someone's color matching game (C++, SFML).</li>
-<li><a href="https://en.sfml-dev.org/forums/index.php?topic=22048">Snek</a> - clone of the classic Snake game (C++, SFML).</li>
+<li class="cpp ccpp"><a href="https://github.com/FRex/Man">Man</a> - clone of PacMan, written for a class (C++, SFML).</li>
+<li class="lua"><a href="https://frex.itch.io/missles">Missles</a> - clone of classic Missile Command game, written for <a href="https://www.gamedev.net/">gamedev.net</a> 2018 new year challenge (Lua, LOVE2D).</li>
+<li class="cpp ccpp"><a href="https://frex.itch.io/routing-game">Routing Game</a> - clone of an old game I had that I forgot the name of (C++, SFML).</li>
+<li class="cpp ccpp"><a href="https://github.com/FRex/Heart">Heart</a> - a rythm and color matching game inspired by a YouTube video of someone's color matching game (C++, SFML).</li>
+<li class="cpp ccpp"><a href="https://en.sfml-dev.org/forums/index.php?topic=22048">Snek</a> - clone of the classic Snake game (C++, SFML).</li>
 </ul>
 
 
 Other things I've made or done:
 <ul>
-<li><a href="https://github.com/nothings/stb/commit/a31d50ab2918a5ac3d8a70506d483a4c79c32402">stbi crashing bug report</a> - credit for finding a crashing bug in stb_image (accessing an uinitialized pointer).</li>
-<li><a href="https://github.com/SFML/SFML/pull/1018">SFML WAV bugfix</a> - diagnosed and fixed a WAV bug (cracking/pop due to reading metadata as samples) in SFML.</li>
-<li><a href="https://gist.github.com/FRex/51f73862efd916221a5df6b6baca9db1">Polyglot Request</a> - a tiny polyglot file using requests, valid as both Lua and Python.</li>
-<li><a href="https://store.steampowered.com/app/739180/AchBall/">AchBall translation</a> - translated AchBall into Polish (credited as FRex).</li>
-<li><a href="https://github.com/FRex/FoxRaycaster">FoxRaycaster</a> - Wolf3D style raycaster, based on a tutorial.</li>
-<li><a href="https://github.com/FRex/Fox2">Fox2</a> - same as above but optimize and with an NVidia CUDA path, written for class.</li>
-<li><a href="https://github.com/FRex/FizzBuzz">FizzBuzz</a> - a collection of solutions of popular FizzBuzz problem in few languages.</li>
-<li><a href="https://github.com/FRex/Euler">Euler</a> - Haskell solutions to few Project Euler problems, done to get used to Haksell for my class at the time.</li>
-<li><a href="https://github.com/FRex/cmvdecode">cmvdecode</a> - Python script to decode Creative's old CMV "video" format.</li>
-<li><a href="https://github.com/FRex/brender">brender</a> - a basic 3D software renderer, with perspective correct texturing, written for class.</li>
-<li><a href="https://github.com/FRex/blapastebin">Bla Paste Bin</a> - 1-file PHP pastebin-like webapp. A PHP Hello World basically. Just for fun, not for real use.</li>
-<li><a href="https://github.com/FRex/hashell">Hashell</a> - small shell in Haskell, has pipes and works on Windows and Linux. Written for a class.</li>
+<li class="c ccpp"><a href="https://github.com/nothings/stb/commit/a31d50ab2918a5ac3d8a70506d483a4c79c32402">stbi crashing bug report</a> - credit for finding a crashing bug in stb_image (accessing an uinitialized pointer).</li>
+<li class="cpp ccpp"><a href="https://github.com/SFML/SFML/pull/1018">SFML WAV bugfix</a> - diagnosed and fixed a WAV bug (cracking/pop due to reading metadata as samples) in SFML.</li>
+<li class="lua python cli"><a href="https://gist.github.com/FRex/51f73862efd916221a5df6b6baca9db1">Polyglot Request</a> - a tiny polyglot file using requests, valid as both Lua and Python.</li>
+<li class=""><a href="https://store.steampowered.com/app/739180/AchBall/">AchBall translation</a> - translated AchBall into Polish (credited as FRex).</li>
+<li class="cpp ccpp"><a href="https://github.com/FRex/FoxRaycaster">FoxRaycaster</a> - Wolf3D style raycaster, based on a tutorial.</li>
+<li class="cpp ccpp"><a href="https://github.com/FRex/Fox2">Fox2</a> - same as above but optimize and with an NVidia CUDA path, written for class.</li>
+<li class="c cpp ccpp python lua haskell php pascal"><a href="https://github.com/FRex/FizzBuzz">FizzBuzz</a> - a collection of solutions of popular FizzBuzz problem in few languages.</li>
+<li class="haskell"><a href="https://github.com/FRex/Euler">Euler</a> - Haskell solutions to few Project Euler problems, done to get used to Haksell for my class at the time.</li>
+<li class="python cli"><a href="https://github.com/FRex/cmvdecode">cmvdecode</a> - Python script to decode Creative's old CMV "video" format.</li>
+<li class="c ccpp"><a href="https://github.com/FRex/brender">brender</a> - a basic 3D software renderer, with perspective correct texturing, written for class.</li>
+<li class="php"><a href="https://github.com/FRex/blapastebin">Bla Paste Bin</a> - 1-file PHP pastebin-like webapp. A PHP Hello World basically. Just for fun, not for real use.</li>
+<li class="haskell cli"><a href="https://github.com/FRex/hashell">Hashell</a> - small shell in Haskell, has pipes and works on Windows and Linux. Written for a class.</li>
 </ul>
 
 
@@ -103,8 +176,20 @@ Very handy programs I use and recommend (not made by me):
 <li><a href="https://crystalmark.info/en/">CrystalDiskMark and Info</a> - two tools, one to benchmark drives, another to list their information.</li>
 </ul>
 
+</div>
 
 </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
 </body>
 
 </html>
