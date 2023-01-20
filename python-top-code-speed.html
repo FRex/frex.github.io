@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="programming article about why python code at the top level is slower than in functions">
+<title>Python top-level slower than functions | frex.github.io</title>
+<link rel="stylesheet" href="monokai.css">
+<style>
+#mainblock {
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 2%;
+    padding-left: 2%;
+    padding-right: 2%;
+}
+
+.highlight {
+  margin-left: auto;
+  margin-right: auto;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  margin-top: 1em;
+  padding-left: 2%;
+  padding-right: 2%;
+}
+
+code {
+    background: #272822;
+    color: #f8f8f2;
+}
+
+@media screen and (min-width: 900px) {
+    #mainblock {
+        max-width: 60%;
+    }
+
+    .highlight {
+        max-width: 70%;
+    }
+}
+</style>
+</head>
+<body>
+<div id="mainblock">
+<p><a href="index.html" title="back to Index | frex.github.io">Back to Index | frex.github.io</a>. 
+Generated from <a href=python-top-code-speed.md>python-top-code-speed.md</a> using <a href=makearticle.py>makearticle.py</a>.</p>
+<h1>Did you know top level Python code runs slower than functions?</h1>
+
+<h2>Quick version</h2>
+
+<p>If you're in a hurry or not that interested in the longer explanation and examples:</p>
+
+<ol>
+<li>Locals are looked up by index in an array.</li>
+<li>Globals are looked up by name in a hashtable.</li>
+<li>In top-level code every variable that'd be local is instead global.</li>
+<li>This is only a visible performance issue in case of heavy processing done in to-level code.</li>
+</ol>
+
+<p>That's it. Also: in Lua, the whole source file is an implicit function so this problem doesn't happen.</p>
+
+<h2>Onto the full story</h2>
+
+<p>It might sound surprising coming from compiled languages and even from some other
+interpreted languages, but it's true, <a href="https://docs.python.org/3/library/__main__.html" title="Python 3 Docs">top-level code</a>
+in Python is slower than code inside functions.</p>
+
+<p>Let's first confirm it happens, and then explain why. Let's run this bit of code.</p>
+
+<div class="highlight">
+<pre><span></span><code><span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">def</span> <span class="nf">f</span><span class="p">():</span>
+ <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+ <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="mi">7</span><span class="p">):</span>
+  <span class="n">s</span> <span class="o">+=</span> <span class="n">i</span>
+
+<span class="n">a</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">f</span><span class="p">()</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="mi">7</span><span class="p">):</span>
+ <span class="n">s</span> <span class="o">+=</span> <span class="n">i</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">((</span><span class="n">c</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<div class="highlight">
+<pre><span></span><code>$<span class="w"> </span>python3.11<span class="w"> </span>code.py
+<span class="m">1</span>.228703498840332<span class="w"> </span><span class="m">0</span>.6808910369873047
+<span class="m">1</span>.8045523176173655
+</code></pre>
+</div>
+
+<p>The results vary by Python version (and in case of Pypy the results are closer, or even require
+increasing the limit to <code>10 ** 8</code>), but it's clear that a simple loop that just accumulates numbers
+runs 50-100% slower if it's at the top-level compared to a function. Now onto the explanation.</p>
+
+<h2>But why?</h2>
+
+<p>The Python docs about <a href="https://docs.python.org/3/library/__main__.html" title="Python 3 Docs">top-level code</a>
+actually contain a hint as for why this happens (globals), but don't mention the potential rare performance issue.</p>
+
+<p>Let's see the bytecode, maybe some differences stand out.</p>
+
+<div class="highlight">
+<pre><span></span><code>$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>dis<span class="w"> </span>code.py
+<span class="o">(</span>...redacted<span class="w"> </span><span class="k">for</span><span class="w"> </span>brevity...<span class="o">)</span>
+
+<span class="w"> </span><span class="m">11</span><span class="w">          </span><span class="m">96</span><span class="w"> </span>LOAD_CONST<span class="w">               </span><span class="m">0</span><span class="w"> </span><span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="w">             </span><span class="m">98</span><span class="w"> </span>STORE_NAME<span class="w">               </span><span class="m">4</span><span class="w"> </span><span class="o">(</span>s<span class="o">)</span>
+
+<span class="w"> </span><span class="m">12</span><span class="w">         </span><span class="m">100</span><span class="w"> </span>PUSH_NULL
+<span class="w">            </span><span class="m">102</span><span class="w"> </span>LOAD_NAME<span class="w">                </span><span class="m">5</span><span class="w"> </span><span class="o">(</span>range<span class="o">)</span>
+<span class="w">            </span><span class="m">104</span><span class="w"> </span>LOAD_CONST<span class="w">               </span><span class="m">3</span><span class="w"> </span><span class="o">(</span><span class="m">10000000</span><span class="o">)</span>
+<span class="w">            </span><span class="m">106</span><span class="w"> </span>PRECALL<span class="w">                  </span><span class="m">1</span>
+<span class="w">            </span><span class="m">110</span><span class="w"> </span>CALL<span class="w">                     </span><span class="m">1</span>
+<span class="w">            </span><span class="m">120</span><span class="w"> </span>GET_ITER
+<span class="w">        </span>&gt;&gt;<span class="w">  </span><span class="m">122</span><span class="w"> </span>FOR_ITER<span class="w">                 </span><span class="m">7</span><span class="w"> </span><span class="o">(</span>to<span class="w"> </span><span class="m">138</span><span class="o">)</span>
+<span class="w">            </span><span class="m">124</span><span class="w"> </span>STORE_NAME<span class="w">               </span><span class="m">6</span><span class="w"> </span><span class="o">(</span>i<span class="o">)</span>
+
+<span class="w"> </span><span class="m">13</span><span class="w">         </span><span class="m">126</span><span class="w"> </span>LOAD_NAME<span class="w">                </span><span class="m">4</span><span class="w"> </span><span class="o">(</span>s<span class="o">)</span>
+<span class="w">            </span><span class="m">128</span><span class="w"> </span>LOAD_NAME<span class="w">                </span><span class="m">6</span><span class="w"> </span><span class="o">(</span>i<span class="o">)</span>
+<span class="w">            </span><span class="m">130</span><span class="w"> </span>BINARY_OP<span class="w">               </span><span class="m">13</span><span class="w"> </span><span class="o">(</span>+<span class="o">=)</span>
+<span class="w">            </span><span class="m">134</span><span class="w"> </span>STORE_NAME<span class="w">               </span><span class="m">4</span><span class="w"> </span><span class="o">(</span>s<span class="o">)</span>
+<span class="w">            </span><span class="m">136</span><span class="w"> </span>JUMP_BACKWARD<span class="w">            </span><span class="m">8</span><span class="w"> </span><span class="o">(</span>to<span class="w"> </span><span class="m">122</span><span class="o">)</span>
+
+<span class="o">(</span>...redacted<span class="w"> </span><span class="k">for</span><span class="w"> </span>brevity...<span class="o">)</span>
+
+Disassembly<span class="w"> </span>of<span class="w"> </span>&lt;code<span class="w"> </span>object<span class="w"> </span>f<span class="w"> </span>at<span class="w"> </span>0x000001D92CF13690,<span class="w"> </span>file<span class="w"> </span><span class="s2">&quot;code.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">3</span>&gt;:
+<span class="w">  </span><span class="m">3</span><span class="w">           </span><span class="m">0</span><span class="w"> </span>RESUME<span class="w">                   </span><span class="m">0</span>
+
+<span class="w">  </span><span class="m">4</span><span class="w">           </span><span class="m">2</span><span class="w"> </span>LOAD_CONST<span class="w">               </span><span class="m">1</span><span class="w"> </span><span class="o">(</span><span class="m">0</span><span class="o">)</span>
+<span class="w">              </span><span class="m">4</span><span class="w"> </span>STORE_FAST<span class="w">               </span><span class="m">0</span><span class="w"> </span><span class="o">(</span>s<span class="o">)</span>
+
+<span class="w">  </span><span class="m">5</span><span class="w">           </span><span class="m">6</span><span class="w"> </span>LOAD_GLOBAL<span class="w">              </span><span class="m">1</span><span class="w"> </span><span class="o">(</span>NULL<span class="w"> </span>+<span class="w"> </span>range<span class="o">)</span>
+<span class="w">             </span><span class="m">18</span><span class="w"> </span>LOAD_CONST<span class="w">               </span><span class="m">2</span><span class="w"> </span><span class="o">(</span><span class="m">10000000</span><span class="o">)</span>
+<span class="w">             </span><span class="m">20</span><span class="w"> </span>PRECALL<span class="w">                  </span><span class="m">1</span>
+<span class="w">             </span><span class="m">24</span><span class="w"> </span>CALL<span class="w">                     </span><span class="m">1</span>
+<span class="w">             </span><span class="m">34</span><span class="w"> </span>GET_ITER
+<span class="w">        </span>&gt;&gt;<span class="w">   </span><span class="m">36</span><span class="w"> </span>FOR_ITER<span class="w">                 </span><span class="m">7</span><span class="w"> </span><span class="o">(</span>to<span class="w"> </span><span class="m">52</span><span class="o">)</span>
+<span class="w">             </span><span class="m">38</span><span class="w"> </span>STORE_FAST<span class="w">               </span><span class="m">1</span><span class="w"> </span><span class="o">(</span>i<span class="o">)</span>
+
+<span class="w">  </span><span class="m">6</span><span class="w">          </span><span class="m">40</span><span class="w"> </span>LOAD_FAST<span class="w">                </span><span class="m">0</span><span class="w"> </span><span class="o">(</span>s<span class="o">)</span>
+<span class="w">             </span><span class="m">42</span><span class="w"> </span>LOAD_FAST<span class="w">                </span><span class="m">1</span><span class="w"> </span><span class="o">(</span>i<span class="o">)</span>
+<span class="w">             </span><span class="m">44</span><span class="w"> </span>BINARY_OP<span class="w">               </span><span class="m">13</span><span class="w"> </span><span class="o">(</span>+<span class="o">=)</span>
+<span class="w">             </span><span class="m">48</span><span class="w"> </span>STORE_FAST<span class="w">               </span><span class="m">0</span><span class="w"> </span><span class="o">(</span>s<span class="o">)</span>
+<span class="w">             </span><span class="m">50</span><span class="w"> </span>JUMP_BACKWARD<span class="w">            </span><span class="m">8</span><span class="w"> </span><span class="o">(</span>to<span class="w"> </span><span class="m">36</span><span class="o">)</span>
+
+<span class="w">  </span><span class="m">5</span><span class="w">     </span>&gt;&gt;<span class="w">   </span><span class="m">52</span><span class="w"> </span>LOAD_CONST<span class="w">               </span><span class="m">0</span><span class="w"> </span><span class="o">(</span>None<span class="o">)</span>
+<span class="w">             </span><span class="m">54</span><span class="w"> </span>RETURN_VALUE
+</code></pre>
+</div>
+
+<p>There we go, it seems the function uses <code>STORE_FAST</code> and <code>LOAD_FAST</code> instead of
+<code>LOAD_NAME</code> and <code>STORE_NAME</code>. This is because in the function, the variables
+<code>i</code> and <code>s</code> are local (to that function), while at the top-level they are
+globals (for the module this code.py file represents). Accessing a local is
+much easier from Python interpreter's point of view.</p>
+
+<h2>But why, in C?</h2>
+
+<p>If we download <a href="https://www.python.org/downloads/source/" title="python source link">Python interpreter's source code</a>
+and take a peek in Python/ceval.c file, we can quickly see why local variables work faster than global ones.</p>
+
+<p>First let's see how locals work at the high level, skipping most boilerplate, and
+only focusing on load, since look up for store is analogous.</p>
+
+<div class="highlight">
+<pre><span></span><code><span class="c1">// this is C, so [i] can only mean indexing an array, a O(1) operation</span>
+<span class="cp">#define GETLOCAL(i)     (frame-&gt;localsplus[i])</span>
+
+<span class="c1">// later, in the main opcode switch statement..</span>
+<span class="w">  </span><span class="n">TARGET</span><span class="p">(</span><span class="n">LOAD_FAST</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">PyObject</span><span class="w"> </span><span class="o">*</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GETLOCAL</span><span class="p">(</span><span class="n">oparg</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>Sounds simple, just looking up a pointer (to Python value) by index in an array.</p>
+
+<p>Now onto the globals.</p>
+
+<div class="highlight">
+<pre><span></span><code><span class="c1">// for use later, an operation more complex than a simple array index</span>
+<span class="cp">#define GETITEM(v, i) PyTuple_GetItem((v), (i))</span>
+
+<span class="c1">// again later in the main opcode switch statement</span>
+<span class="w">        </span><span class="n">TARGET</span><span class="p">(</span><span class="n">LOAD_NAME</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">PyObject</span><span class="w"> </span><span class="o">*</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GETITEM</span><span class="p">(</span><span class="n">names</span><span class="p">,</span><span class="w"> </span><span class="n">oparg</span><span class="p">);</span>
+<span class="w">            </span><span class="n">PyObject</span><span class="w"> </span><span class="o">*</span><span class="n">locals</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LOCALS</span><span class="p">();</span>
+<span class="c1">// and later...</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">PyDict_CheckExact</span><span class="p">(</span><span class="n">locals</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PyDict_GetItemWithError</span><span class="p">(</span><span class="n">locals</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<span class="c1">// ...</span>
+<span class="w">  </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PyObject_GetItem</span><span class="p">(</span><span class="n">locals</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<span class="c1">// ...</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">v</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PyDict_GetItemWithError</span><span class="p">(</span><span class="n">GLOBALS</span><span class="p">(),</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<span class="c1">// ...</span>
+<span class="w">  </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">PyDict_CheckExact</span><span class="p">(</span><span class="n">BUILTINS</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">// ...</span>
+<span class="w">  </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PyObject_GetItem</span><span class="p">(</span><span class="n">BUILTINS</span><span class="p">(),</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>Lots of branching and look ups in dicts (which are very efficient, but won't beat indexing an array, once).
+Even getting name to look up by is a tuple index, via a function call, to another .c file, etc.</p>
+
+<p>And actually, if you go lower, you can run into another opcode - <code>LOAD_GLOBAL</code>, which is emitted
+if you use the <code>global</code> keyword inside a function, and is actually more efficient than <code>LOAD_NAME</code>
+(although they are so close that when I add <code>global</code> to variables in my first example, it makes
+top-level and function run time equivalent).</p>
+
+<h2>Conclusion</h2>
+
+<p>This is a very niche but interesting issue. Usually it's not a performance problem, except
+in a very specific case where there are many lines of code at the top level that do a lot of work.</p>
+
+<p>For example I first ran into this when processing a multi million line text file, line by line, splitting
+them with <code>.split()</code> then doing various operations on parts, putting some statistics into a dict, etc.</p>
+
+<p>All this really added up and when I moved all the code into a single main function the runtime went down by
+a third, which in my case shaved off 10-20 seconds.</p>
+
+<p>Due to how flexible Python is and its non-optimizing compiler, this will never be fully solved. For example
+you could call a function in the loop body that changes the globals, so every load and store of them must
+be preserved in the generated code.</p>
+
+<h2>Lua, for comparison</h2>
+
+<p>While this issue might be obvious to a Python programmer and an obvious downside of interpreted languages,
+not all of them exhibit it, for example - Lua.</p>
+
+<div class="highlight">
+<pre><span></span><code><span class="kd">local</span> <span class="kr">function</span> <span class="nf">f</span><span class="p">()</span>
+ <span class="kd">local</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+ <span class="kr">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="o">*</span><span class="mi">10</span><span class="o">^</span><span class="mi">9</span> <span class="kr">do</span> <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="n">i</span> <span class="kr">end</span>
+<span class="kr">end</span>
+
+<span class="kd">local</span> <span class="n">a</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
+<span class="n">f</span><span class="p">()</span>
+<span class="kd">local</span> <span class="n">b</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
+<span class="kd">local</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="kr">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="o">*</span><span class="mi">10</span><span class="o">^</span><span class="mi">9</span> <span class="kr">do</span> <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="n">i</span> <span class="kr">end</span>
+<span class="kd">local</span> <span class="n">c</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">((</span><span class="n">c</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>Lua is faster, and its time function returns full seconds without fractions, so I upped the number of iterations.</p>
+
+<p>For various reasons I'm also using Lua 5.1 (the one most similar to LuaJIT) and not the latest one, but that doesn't matter in this case.</p>
+
+<div class="highlight">
+<pre><span></span><code>$<span class="w"> </span>lua5.1<span class="w"> </span>code.lua
+<span class="m">32</span><span class="w">      </span><span class="m">34</span>
+<span class="m">0</span>.94117647058824
+</code></pre>
+</div>
+
+<p>The reason for this is that Lua treats top-level code as an implicit function. When embedding Lua
+it's even clearer that this happens: parsing Lua code in the C API causes a function to be created.</p>
+
+<p>If we look at the bytecode, like we did in Python, we'll see instead that the loop instructions
+are all the same (except for indices of registers used, but those do not change performance, only actual opcodes do).</p>
+
+<p>If I didn't use the keyword <code>local</code> then all of the variables would be globals, but the performance and
+opcodes would also be the same (and worse, since in Lua too, globals are stored by name in a table, while locals use indices).</p>
+
+<div class="highlight">
+<pre><span></span><code>$<span class="w"> </span>luac5.1<span class="w"> </span>-l<span class="w"> </span>code.lua
+
+main<span class="w"> </span>&lt;code.lua:0,0&gt;<span class="w"> </span><span class="o">(</span><span class="m">29</span><span class="w"> </span>instructions,<span class="w"> </span><span class="m">116</span><span class="w"> </span>bytes<span class="w"> </span>at<span class="w"> </span>005013D8<span class="o">)</span>
+<span class="m">0</span>+<span class="w"> </span>params,<span class="w"> </span><span class="m">8</span><span class="w"> </span>slots,<span class="w"> </span><span class="m">0</span><span class="w"> </span>upvalues,<span class="w"> </span><span class="m">9</span><span class="w"> </span>locals,<span class="w"> </span><span class="m">6</span><span class="w"> </span>constants,<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="k">function</span>
+<span class="o">(</span>...redacted<span class="w"> </span><span class="k">for</span><span class="w"> </span>brevity...<span class="o">)</span>
+<span class="w">        </span><span class="m">10</span><span class="w">      </span><span class="o">[</span><span class="m">9</span><span class="o">]</span><span class="w">     </span>LOADK<span class="w">           </span><span class="m">3</span><span class="w"> </span>-3<span class="w">    </span><span class="p">;</span><span class="w"> </span><span class="m">0</span>
+<span class="w">        </span><span class="m">11</span><span class="w">      </span><span class="o">[</span><span class="m">10</span><span class="o">]</span><span class="w">    </span>LOADK<span class="w">           </span><span class="m">4</span><span class="w"> </span>-4<span class="w">    </span><span class="p">;</span><span class="w"> </span><span class="m">1</span>
+<span class="w">        </span><span class="m">12</span><span class="w">      </span><span class="o">[</span><span class="m">10</span><span class="o">]</span><span class="w">    </span>LOADK<span class="w">           </span><span class="m">5</span><span class="w"> </span>-5<span class="w">    </span><span class="p">;</span><span class="w"> </span><span class="m">3000000000</span>
+<span class="w">        </span><span class="m">13</span><span class="w">      </span><span class="o">[</span><span class="m">10</span><span class="o">]</span><span class="w">    </span>LOADK<span class="w">           </span><span class="m">6</span><span class="w"> </span>-4<span class="w">    </span><span class="p">;</span><span class="w"> </span><span class="m">1</span>
+<span class="w">        </span><span class="m">14</span><span class="w">      </span><span class="o">[</span><span class="m">10</span><span class="o">]</span><span class="w">    </span>FORPREP<span class="w">         </span><span class="m">4</span><span class="w"> </span><span class="m">1</span><span class="w">     </span><span class="p">;</span><span class="w"> </span>to<span class="w"> </span><span class="m">16</span>
+<span class="w">        </span><span class="m">15</span><span class="w">      </span><span class="o">[</span><span class="m">10</span><span class="o">]</span><span class="w">    </span>ADD<span class="w">             </span><span class="m">3</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">7</span>
+<span class="w">        </span><span class="m">16</span><span class="w">      </span><span class="o">[</span><span class="m">10</span><span class="o">]</span><span class="w">    </span>FORLOOP<span class="w">         </span><span class="m">4</span><span class="w"> </span>-2<span class="w">    </span><span class="p">;</span><span class="w"> </span>to<span class="w"> </span><span class="m">15</span>
+<span class="o">(</span>...redacted<span class="w"> </span><span class="k">for</span><span class="w"> </span>brevity...<span class="o">)</span>
+
+<span class="k">function</span><span class="w"> </span>&lt;code.lua:1,4&gt;<span class="w"> </span><span class="o">(</span><span class="m">8</span><span class="w"> </span>instructions,<span class="w"> </span><span class="m">32</span><span class="w"> </span>bytes<span class="w"> </span>at<span class="w"> </span><span class="m">00502268</span><span class="o">)</span>
+<span class="m">0</span><span class="w"> </span>params,<span class="w"> </span><span class="m">5</span><span class="w"> </span>slots,<span class="w"> </span><span class="m">0</span><span class="w"> </span>upvalues,<span class="w"> </span><span class="m">5</span><span class="w"> </span>locals,<span class="w"> </span><span class="m">3</span><span class="w"> </span>constants,<span class="w"> </span><span class="m">0</span><span class="w"> </span>functions
+<span class="w">        </span><span class="m">1</span><span class="w">       </span><span class="o">[</span><span class="m">2</span><span class="o">]</span><span class="w">     </span>LOADK<span class="w">           </span><span class="m">0</span><span class="w"> </span>-1<span class="w">    </span><span class="p">;</span><span class="w"> </span><span class="m">0</span>
+<span class="w">        </span><span class="m">2</span><span class="w">       </span><span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w">     </span>LOADK<span class="w">           </span><span class="m">1</span><span class="w"> </span>-2<span class="w">    </span><span class="p">;</span><span class="w"> </span><span class="m">1</span>
+<span class="w">        </span><span class="m">3</span><span class="w">       </span><span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w">     </span>LOADK<span class="w">           </span><span class="m">2</span><span class="w"> </span>-3<span class="w">    </span><span class="p">;</span><span class="w"> </span><span class="m">3000000000</span>
+<span class="w">        </span><span class="m">4</span><span class="w">       </span><span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w">     </span>LOADK<span class="w">           </span><span class="m">3</span><span class="w"> </span>-2<span class="w">    </span><span class="p">;</span><span class="w"> </span><span class="m">1</span>
+<span class="w">        </span><span class="m">5</span><span class="w">       </span><span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w">     </span>FORPREP<span class="w">         </span><span class="m">1</span><span class="w"> </span><span class="m">1</span><span class="w">     </span><span class="p">;</span><span class="w"> </span>to<span class="w"> </span><span class="m">7</span>
+<span class="w">        </span><span class="m">6</span><span class="w">       </span><span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w">     </span>ADD<span class="w">             </span><span class="m">0</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">4</span>
+<span class="w">        </span><span class="m">7</span><span class="w">       </span><span class="o">[</span><span class="m">3</span><span class="o">]</span><span class="w">     </span>FORLOOP<span class="w">         </span><span class="m">1</span><span class="w"> </span>-2<span class="w">    </span><span class="p">;</span><span class="w"> </span>to<span class="w"> </span><span class="m">6</span>
+<span class="w">        </span><span class="m">8</span><span class="w">       </span><span class="o">[</span><span class="m">4</span><span class="o">]</span><span class="w">     </span>RETURN<span class="w">          </span><span class="m">0</span><span class="w"> </span><span class="m">1</span>
+</code></pre>
+</div>
+
+<p><a href="index.html" title="back to Index | frex.github.io">No matter if you ran through this article in top-level or a function, you can now quickly go back to: Index | frex.github.io</a>.</p>
+
+</div>
+</body>
+</html>
