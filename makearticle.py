@@ -2,9 +2,11 @@ import markdown2
 import sys
 
 
-def make_link(fname: str) -> str:
+def make_link_to_repo(fname: str, display: str = None) -> str:
+    if display is None:
+        display = fname
     # NOTE: unsafe, doesn't escape HTML special chars
-    return f"""<a href={fname}>{fname}</a>"""
+    return f"""<a href="https://github.com/FRex/frex.github.io/blob/main/{fname}">{display}</a>"""
 
 
 def make_article(fname: str, title: str, desc: str):
@@ -17,11 +19,12 @@ def make_article(fname: str, title: str, desc: str):
     html = template
     html = template.replace("$TITLE", title)
     html = html.replace("$DESCRIPTION", desc)
-    x = make_link("makearticle.py")
-    madeby = f"""\nGenerated from {make_link(fname)} using {x}."""
+    x = make_link_to_repo("makearticle.py")
+    outname = fname.replace(".md", ".html")
+    y = make_link_to_repo(outname, 'Generated')
+    madeby = f"""\n{y} from {make_link_to_repo(fname)} using {x}."""
     html = html.replace("$MADEBY", madeby)
     html = html.replace("$BODY", art)
-    outname = fname.replace(".md", ".html")
     print(f"Writing to {outname}")
     with open(outname, "w", encoding="UTF-8") as f:
         f.write(html)
