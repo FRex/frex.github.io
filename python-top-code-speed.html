@@ -45,7 +45,7 @@ code {
 <body>
 <div id="mainblock">
 <p><a href="index.html" title="back to Index | frex.github.io">Back to Index | frex.github.io</a>. 
-<a href="https://github.com/FRex/frex.github.io/blob/main/python-top-code-speed.html">Generated</a> from <a href="https://github.com/FRex/frex.github.io/blob/main/python-top-code-speed.md">python-top-code-speed.md</a> using <a href="https://github.com/FRex/frex.github.io/blob/main/makearticle.py">makearticle.py</a>.</p>
+<a href="https://github.com/FRex/frex.github.io/blob/main/python-top-code-speed.html">Generated</a> from <a href="https://github.com/FRex/frex.github.io/blob/main/python-top-code-speed.md">python-top-code-speed.md</a> using <a href="https://github.com/FRex/frex.github.io/blob/main/makearticle.py">makearticle.py</a> on 2023-10-17 18:00.</p>
 <h1>Did you know top level Python code runs slower than functions?</h1>
 
 <h2>Quick version</h2>
@@ -60,6 +60,13 @@ code {
 </ol>
 
 <p>That's it. Also: in Lua, the whole source file is an implicit function so this problem doesn't happen.</p>
+
+<p>Extra notes to keep in mind as of October 2023:</p>
+
+<ol>
+<li>I found out that Python itself ships a script to benchmark variable access speeds - <code>Tools/scripts/var_access_benchmark.py</code>. I was not aware of it when I originally wrote this text.</li>
+<li>I ran into another article explaining this: <a href="https://stackabuse.com/why-does-python-code-run-faster-in-a-function/" title="Why does Python Code Run Faster in a Function? on stackabuse.com">stackabuse.com article: Why does Python Code Run Faster in a Function?</a>.</li>
+</ol>
 
 <h2>Onto the full story</h2>
 

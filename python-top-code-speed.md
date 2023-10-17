@@ -11,6 +11,11 @@ If you're in a hurry or not that interested in the longer explanation and exampl
 
 That's it. Also: in Lua, the whole source file is an implicit function so this problem doesn't happen.
 
+Extra notes to keep in mind as of October 2023:
+
+1. I found out that Python itself ships a script to benchmark variable access speeds - `Tools/scripts/var_access_benchmark.py`. I was not aware of it when I originally wrote this text.
+1. I ran into another article explaining this: [stackabuse.com article: Why does Python Code Run Faster in a Function?](https://stackabuse.com/why-does-python-code-run-faster-in-a-function/ "Why does Python Code Run Faster in a Function? on stackabuse.com").
+
 
 ## Onto the full story
 

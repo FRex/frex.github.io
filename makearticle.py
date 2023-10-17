@@ -1,4 +1,5 @@
 import markdown2
+import datetime
 import sys
 
 
@@ -22,7 +23,8 @@ def make_article(fname: str, title: str, desc: str):
     x = make_link_to_repo("makearticle.py")
     outname = fname.replace(".md", ".html")
     y = make_link_to_repo(outname, "Generated")
-    madeby = f"""\n{y} from {make_link_to_repo(fname)} using {x}."""
+    timestamp = datetime.datetime.now().strftime(r"%Y-%m-%d %H:%M")
+    madeby = f"""\n{y} from {make_link_to_repo(fname)} using {x} on {timestamp}."""
     html = html.replace("$MADEBY", madeby)
     html = html.replace("$BODY", art)
     print(f"Writing to {outname}")
