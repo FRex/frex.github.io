@@ -21,12 +21,12 @@ def make_article(fname: str, title: str, desc: str):
     html = html.replace("$DESCRIPTION", desc)
     x = make_link_to_repo("makearticle.py")
     outname = fname.replace(".md", ".html")
-    y = make_link_to_repo(outname, 'Generated')
+    y = make_link_to_repo(outname, "Generated")
     madeby = f"""\n{y} from {make_link_to_repo(fname)} using {x}."""
     html = html.replace("$MADEBY", madeby)
     html = html.replace("$BODY", art)
     print(f"Writing to {outname}")
-    with open(outname, "w", encoding="UTF-8") as f:
+    with open(outname, "w", encoding="UTF-8", newline="\n") as f:
         f.write(html)
 
 
