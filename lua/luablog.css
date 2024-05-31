@@ -1,0 +1,49 @@
+html {
+    background-color: rgb(53, 80, 130)
+}
+
+body {
+    background-color: lightgray;
+    color: black;
+    font-family: Helvetica, Arial, sans-serif;
+    text-align: justify;
+    line-height: 1.25;
+    margin: 16px auto;
+    padding: 2em;
+    border: solid black 0.5em;
+    border-radius: 3em;
+    max-width: 65em;
+    width: 80%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    color: cornflowerblue;
+    margin: 0;
+}
+
+pre {
+    color: white;
+    background-color: #333;
+    max-width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0em 1em 1em 1em;
+}
+
+h1 {
+    font-size: 28pt;
+}
+
+h2:before,
+h3::before {
+    content: "\2B24";
+    padding-right: 0.5em;
+}
+
+a:link:hover,
+a:visited:hover {
+    background-color: violet;
+}
