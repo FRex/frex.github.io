@@ -106,7 +106,7 @@ end
 
 
 
-pagetemplate = [==[
+local pagetemplate = [==[
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -117,6 +117,7 @@ pagetemplate = [==[
 <link rel="stylesheet" href="luablog.css">
 </head>
 <body>
+$TAGS
 $BODY
 </body>
 </html>
@@ -152,6 +153,8 @@ local function savefile(fname, content)
     return true, fname .. ": OK"
 end
 
+local globaltags = {}
+
 local function makepage(mdfname)
     local lines, err = loadlines(mdfname)
     if not lines then
@@ -180,7 +183,14 @@ local function makepage(mdfname)
     end
 
     local mark = markdown(table.concat(lines, '\n', firstmdline))
-    taglinks = 'TAG-LINKS-HERE'
+    local htmlfname = mdfname:gsub('%..*', '.html')
+    table.sort(tags)
+    for i, tag in ipairs(tags) do
+        globaltags[tag] = globaltags[tag] or {}
+        table.insert(globaltags[tag], {htmlfname=htmlfname, title=title})
+        tags[i] = ('<a href="tags.html#%s">#%s</a>'):format(tag, tag)
+    end
+    taglinks = table.concat(tags, '\n')
     local replacements = {
         ['$TAGS'] = taglinks,
         ['$BODY'] = mark,
@@ -188,11 +198,69 @@ local function makepage(mdfname)
         ['$DESCRIPTION'] = description,
     }
     local page = pagetemplate:gsub('$%u+', replacements)
-    savefile(mdfname:gsub('%..*', '') .. '.html', page)
+    savefile(htmlfname, page)
 end
 
 makepage 'test.md'
 
+
+local pprint = require 'pprint'
+
+-- table.sort(globaltags)
+
+pprint(globaltags)
+
+
+local tagspagetemplate = [==[
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="FRex Lua Blog posts organized by tag">
+<title>Posts by Tag | FRex Lua Blog</title>
+<link rel="stylesheet" href="luablog.css">
+</head>
+<body>
+$BODY
+</body>
+</html>
+]==]
+
+local lines = {}
+
+local keys = {}
+for k in pairs(globaltags) do table.insert(keys, k) end
+table.sort(keys)
+
+table.insert(lines, "<h1>Posts by tag</h1>")
+table.insert(lines, "<p>")
+table.insert(lines, "<ul>")
+
+for _, tag in ipairs(keys) do
+    table.insert(lines, ('<li><a href="#%s">#%s</a></li>'):format(tag, tag))
+end
+
+table.insert(lines, "</ul>")
+table.insert(lines, "</p>")
+
+
+for _, tag in ipairs(keys) do
+    table.insert(lines, '<div>')
+    table.insert(lines, ('<div id="%s">'):format(tag))
+    table.insert(lines, ('<h2>%s</h2>'):format(tag))
+    table.insert(lines, ('<ul>'):format(tag))
+    for i, v in ipairs(globaltags[tag]) do
+        table.insert(lines, ('<a href="%s">%s</a>'):format(v.htmlfname, v.title))
+    end
+    table.insert(lines, ('</ul>'):format(tag))
+    table.insert(lines, "</div>")
+    table.insert(lines, "</div>")
+end
+
+body = table.concat(lines, '\n')
+
+savefile('tags.html', tagspagetemplate:gsub('$BODY', body))
 
 -- to add: date, tags, titles, remove .md.html from end just .html
 
