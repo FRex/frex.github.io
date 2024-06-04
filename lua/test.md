@@ -1,8 +1,8 @@
 @tag lua
 @tag lorem
 @tag ipsum
-@description Lorem Ipsum Test Article
-@title Lorem Ipsum
+@description Lorem Ipsum Test Article Description
+@title Lorem Ipsum Title
 
 # Lorem Ipsum
 

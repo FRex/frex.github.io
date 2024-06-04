@@ -145,11 +145,19 @@ local function loadlines(fname)
     return ret, fname .. ": OK"
 end
 
+local function printerr(fmt, ...)
+    io.stderr:write(fmt:format(...))
+end
+
 local function savefile(fname, content)
     local f, err = io.open(fname, 'wb')
-    if not f then return false, err end
+    if not f then
+        printerr("failed to save file '%s' - %s\n", fname, err)
+        return false, err
+    end
     f:write(content)
     f:close()
+    printerr("file '%s' saved\n", fname)
     return true, fname .. ": OK"
 end
 
@@ -187,7 +195,7 @@ local function makepage(mdfname)
     table.sort(tags)
     for i, tag in ipairs(tags) do
         globaltags[tag] = globaltags[tag] or {}
-        table.insert(globaltags[tag], {htmlfname=htmlfname, title=title})
+        table.insert(globaltags[tag], {htmlfname=htmlfname, title=title, description=description})
         tags[i] = ('<a href="tags.html#%s">#%s</a>'):format(tag, tag)
     end
     taglinks = table.concat(tags, '\n')
@@ -201,14 +209,20 @@ local function makepage(mdfname)
     savefile(htmlfname, page)
 end
 
-makepage 'test.md'
+inputmds = {
+    'test.md',
+    'newproxy.md',
+}
 
+for _, v in ipairs(inputmds) do
+    makepage(v)
+end
 
 local pprint = require 'pprint'
 
 -- table.sort(globaltags)
 
-pprint(globaltags)
+-- pprint(globaltags)
 
 
 local tagspagetemplate = [==[
@@ -251,7 +265,7 @@ for _, tag in ipairs(keys) do
     table.insert(lines, ('<h2>%s</h2>'):format(tag))
     table.insert(lines, ('<ul>'):format(tag))
     for i, v in ipairs(globaltags[tag]) do
-        table.insert(lines, ('<a href="%s">%s</a>'):format(v.htmlfname, v.title))
+        table.insert(lines, ('<a href="%s">%s - %s</a>'):format(v.htmlfname, v.title, v.description))
     end
     table.insert(lines, ('</ul>'):format(tag))
     table.insert(lines, "</div>")
