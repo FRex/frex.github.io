@@ -127,6 +127,7 @@ local pagetemplate = [==[
 <link rel="stylesheet" href="luablog.css">
 </head>
 <body>
+<a href="index.html">Lua Blog</a>
 $TAGS
 $BODY
 </body>
@@ -172,6 +173,7 @@ local function savefile(fname, content)
 end
 
 local globaltags = {}
+local posts = {}
 
 local function makepage(mdfname)
     local lines, err = loadlines(mdfname)
@@ -216,6 +218,7 @@ local function makepage(mdfname)
         ['$DESCRIPTION'] = description,
     }
     local page = pagetemplate:gsub('$%u+', replacements)
+    table.insert(posts, {htmlfname=htmlfname, title=title, description=description})
     savefile(htmlfname, page)
 end
 
@@ -234,6 +237,7 @@ local tagspagetemplate = [==[
 <link rel="stylesheet" href="luablog.css">
 </head>
 <body>
+<a href="index.html">Lua Blog</a>
 $BODY
 </body>
 </html>
@@ -273,3 +277,30 @@ end
 local body = table.concat(lines, '\n')
 
 savefile('tags.html', tagspagetemplate:gsub('$BODY', body))
+
+
+local indexpagetemplate = [==[
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="FRex Lua Blog posts organized by tag">
+<title>Index | FRex Lua Blog</title>
+<link rel="stylesheet" href="luablog.css">
+</head>
+<body>
+<a href="index.html">Lua Blog</a>
+$POSTS
+</body>
+</html>
+]==]
+
+local postlinks = {}
+table.insert(postlinks, '<ul>')
+for i, v in ipairs(posts) do
+    table.insert(postlinks, ('<li><a href="%s">%s - %s</a></li>'):format(v.htmlfname, v.title, v.description))
+end
+table.insert(postlinks, '</ul>')
+
+savefile('index.html', indexpagetemplate:gsub('$POSTS', table.concat(postlinks, '\n')))
