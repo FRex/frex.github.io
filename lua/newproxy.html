@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="About undocumented newproxy function">
+<title>The newproxy hidden function in Lua 5.1 | FRex Lua Blog</title>
+<link rel="stylesheet" href="luablog.css">
+</head>
+<body>
+<a href="tags.html#c">#c</a>
+<a href="tags.html#lua">#lua</a>
+<a href="tags.html#lua51">#lua51</a>
+<h1>newproxy</h1>
+
+<p><code>newproxy</code> is a hidden function in Lua 5.1, it's not mentioned in the <a href="https://www.lua.org/manual/5.1/manual.html">manual</a>
+but a description and example of its use could be found on <a href="http://lua-users.org/cgi-bin/wiki.pl?action=browse&id=HiddenFeatures&revision=11">Lua User's Wiki Hidden Features Page</a>.</p>
+
+<p>The function was removed past versions 5.1 and grepping the source code of versions 5.2 and above
+finds no hits of it, since the purpose it served was taken over by metatables on tables.</p>
+
+<p>If we compare metatables part of the manuals of
+<a href="https://www.lua.org/manual/5.1/manual.html#2.8">Lua 5.1</a>
+and
+<a href="https://www.lua.org/manual/5.2/manual.html#2.4">Lua 5.2</a>
+we can see 5.2 allows setting <code>__len</code> and <code>__gc</code> on a table, while 5.1 does not.</p>
+
+<p>We can test it with a simple program.</p>
+
+<pre><code>
+local meta = {}
+meta.__gc = function(tab) print(tab, "Hello from __gc") end
+meta.__len = function(tab) print(tab, "Hello from __len"); return -1 end
+local x = setmetatable({}, meta)
+local y = #x
+</code></pre>
+
+<pre><code>
+$ lua51.exe test.lua
+
+$ lua52.exe test.lua
+table: 0000021d84f7a960 Hello from __len
+table: 0000021d84f7a960 Hello from __gc
+</code></pre>
+
+<p>If we adjust the program to use <code>newproxy</code> in Lua 5.1 it will produce a similar result.</p>
+
+<pre><code>
+local x = newproxy(true)
+local meta = getmetatable(x)
+meta.__gc = function(tab) print(tab, "Hello from __gc") end
+meta.__len = function(tab) print(tab, "Hello from __len"); return -1 end
+local y = #x
+</code></pre>
+
+<pre><code>
+$ lua51.exe test.lua
+userdata: 000002264e1f0ef8      Hello from __len
+userdata: 000002264e1f0ef8      Hello from __gc
+</code></pre>
+
+<p>TODO: discuss how to make table using it?</p>
+
+<p>also last paragraph is not printed now - a bug?</p>
+
+</body>
+</html>

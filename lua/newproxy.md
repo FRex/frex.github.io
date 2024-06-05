@@ -13,9 +13,6 @@ but a description and example of its use could be found on [Lua User's Wiki Hidd
 The function was removed past versions 5.1 and grepping the source code of versions 5.2 and above
 finds no hits of it, since the purpose it served was taken over by metatables on tables.
 
-
-# 5.1 vs 5.2 metatables and metamethods
-
 If we compare metatables part of the manuals of
 [Lua 5.1](https://www.lua.org/manual/5.1/manual.html#2.8)
 and

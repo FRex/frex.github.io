@@ -1,7 +1,11 @@
 #!/usr/bin/env lua51
 
+-- this here is so there is zero SETGLOBAL and GETGLOBAL in luac -l -l output
+local _G = _G
+local ipairs, pairs, require, tonumber = _G.ipairs, _G.pairs, _G.require, _G.tonumber
+local table, io = require 'table', require 'io'
+
 local inputmds = {
-    'test.md',
     'newproxy.md',
     -- add new posts at the end
 }
@@ -43,8 +47,8 @@ local function markdown(mdcode)
     local function addpartln(arg) table.insert(outbuf, arg) ; table.insert(outbuf, '\n') end
     local function addpart(arg) table.insert(outbuf, arg) end
 
-    -- NOTE: fake extra newline at the end to force all handling to finish when encountering last line (fully blank)
-    for line in (mdcode .. '\n'):gmatch "([^\r\n]*)\r?\n" do
+    -- NOTE: fake extra newlines at the end to force all handling to finish when encountering last line (fully blank)
+    for line in (mdcode .. '\n\n'):gmatch "([^\r\n]*)\r?\n" do
         if codeblock then
             if line == '```' then addpartln("</code></pre>") ; codeblock = false -- end the code block
             else addpartln((line:gsub('<', '&lt;'))) -- code line, add as is, except html entities
@@ -204,7 +208,7 @@ local function makepage(mdfname)
         table.insert(globaltags[tag], {htmlfname=htmlfname, title=title, description=description})
         tags[i] = ('<a href="tags.html#%s">#%s</a>'):format(tag, tag)
     end
-    taglinks = table.concat(tags, '\n')
+    local taglinks = table.concat(tags, '\n')
     local replacements = {
         ['$TAGS'] = taglinks,
         ['$BODY'] = mark,
@@ -218,13 +222,6 @@ end
 for _, v in ipairs(inputmds) do
     makepage(v)
 end
-
-local pprint = require 'pprint'
-
--- table.sort(globaltags)
-
--- pprint(globaltags)
-
 
 local tagspagetemplate = [==[
 <!DOCTYPE html>
@@ -273,20 +270,6 @@ for _, tag in ipairs(keys) do
     table.insert(lines, "</div>")
 end
 
-body = table.concat(lines, '\n')
+local body = table.concat(lines, '\n')
 
 savefile('tags.html', tagspagetemplate:gsub('$BODY', body))
-
--- to add: date, tags, titles, remove .md.html from end just .html
-
-
-
-
--- local fname = arg[1]
--- local str, err = loadfile(fname)
--- if not str then
---     io.stderr:write(err .. "\n")
---     os.exit(1)
--- end
-
--- markdown(str)
