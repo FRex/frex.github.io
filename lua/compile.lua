@@ -1,5 +1,11 @@
 #!/usr/bin/env lua51
 
+local inputmds = {
+    'test.md',
+    'newproxy.md',
+    -- add new posts at the end
+}
+
 local function markdown(mdcode)
     local currentp = {}
     local listitemcount = 0
@@ -208,11 +214,6 @@ local function makepage(mdfname)
     local page = pagetemplate:gsub('$%u+', replacements)
     savefile(htmlfname, page)
 end
-
-inputmds = {
-    'test.md',
-    'newproxy.md',
-}
 
 for _, v in ipairs(inputmds) do
     makepage(v)
