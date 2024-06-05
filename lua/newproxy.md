@@ -52,9 +52,3 @@ $ lua51.exe test.lua
 userdata: 000002264e1f0ef8      Hello from __len
 userdata: 000002264e1f0ef8      Hello from __gc
 ```
-
-TODO: discuss how to make table using it?
-
-also last paragraph is not printed now - a bug?
-
-bug bug bug not shown
