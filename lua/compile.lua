@@ -87,7 +87,7 @@ local function markdown(mdcode)
                     end
 
                     inlistitem = false
-                    if #lastline > 0 then addpartln() end
+                    if lastline and #lastline > 0 then addpartln() end
                 else
                     -- if in list add line to list item text else add to current paragraph
                     if inlistitem then addpart('\n' .. formatline(line))
