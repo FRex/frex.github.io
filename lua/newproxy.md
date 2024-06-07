@@ -1,6 +1,5 @@
 @tag lua51
 @tag lua
-@tag c
 @description About undocumented newproxy function
 @title The newproxy hidden function in Lua 5.1
 
@@ -52,3 +51,5 @@ $ lua51.exe test.lua
 userdata: 000002264e1f0ef8      Hello from __len
 userdata: 000002264e1f0ef8      Hello from __gc
 ```
+
+I personally never used it and didn't even know it works like that in 5.1 until very recently.
