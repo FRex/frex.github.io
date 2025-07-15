@@ -161,6 +161,16 @@ local function printerr(fmt, ...)
 end
 
 local function savefile(fname, content)
+    local f = io.open(fname, 'rb')
+    if f then
+        oldcontent = f:read '*a'
+        f:close()
+        if oldcontent == content then
+            printerr("file '%s' already exists with given content\n", fname)
+            return true, fname .. ": OK (same)"
+        end
+    end
+
     local f, err = io.open(fname, 'wb')
     if not f then
         printerr("failed to save file '%s' - %s\n", fname, err)
