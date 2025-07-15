@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Moving around fields in Table to remove unnecessary padding">
+<title>Reducing memory taken by table by 8 bytes in 64-bit PUC Lua 5.1 | FRex Lua Blog</title>
+<link rel="stylesheet" href="luablog.css">
+</head>
+<body>
+<a href="index.html">Lua Blog</a>
+<a href="tags.html#lua">#lua</a>
+<a href="tags.html#lua51">#lua51</a>
+<h1>TL;DR</h1>
+
+<p>In <code>Table</code> struct in 64-bit Lua 5.1 there are 4 bytes of padding inserted
+by the C compiler after initial few byte fields, and 4 more bytes after int at
+the end. The int can be moved into the padding after the bytes, removing both
+paddings and lowering size of struct from 64 to 56 bytes.</p>
+
+<p>Lua 5.2 has already done the same:
+<a href="https://github.com/lua/lua/commit/77e7ebca0ab70a7ff00179099a0383314420b2af#diff-a71aa75c20a11677951d73e7d6836e4333e163aa8e4db23976965aa6feeb4945R462-R471">GitHub Lua repo mirror commit</a>.</p>
+
+<h1>Table struct in Lua 5.1</h1>
+
+<p>The struct representing table in Lua 5.1 is:</p>
+
+<pre><code>
+#define CommonHeader	GCObject *next; lu_byte tt; lu_byte marked
+
+typedef struct Table {
+  CommonHeader;
+  lu_byte flags;  /* 1&lt;&lt;p means tagmethod(p) is not present */
+  lu_byte lsizenode;  /* log2 of size of `node' array */
+  struct Table *metatable;
+  TValue *array;  /* array part */
+  Node *node;
+  Node *lastfree;  /* any free position is before this position */
+  GCObject *gclist;
+  int sizearray;  /* size of `array' array */
+} Table;
+</code></pre>
+
+<h1>Padding</h1>
+
+<p>On 64-bit, with pointers being 8 bytes, ints 4 and bytes 1, we get 64 bytes, due to padding required to align
+metatable pointer (padding1) and entire struct (padding2) to 8 bytes (required alignment for pointers):</p>
+
+<pre><code>
+typedef struct Table {
+  CommonHeader;
+  lu_byte flags;  /* 1&lt;&lt;p means tagmethod(p) is not present */
+  lu_byte lsizenode;  /* log2 of size of `node' array */
+
+  char padding1[4]; /* inserted by compiler */
+
+  struct Table *metatable;
+  TValue *array;  /* array part */
+  Node *node;
+  Node *lastfree;  /* any free position is before this position */
+  GCObject *gclist;
+  int sizearray;  /* size of `array' array */
+
+  char padding2[4]; /* inserted by compiler */
+
+} Table;
+</code></pre>
+
+<p>This padding is a standard issue in C (and C++), where compiler cannot reorder the struct members.
+In absence of any special instructons most basic native types require same alignment as their size:
+8 byte pointers to 8, bytes to 1, 4 byte ints to 4,
+and the struct alignment itself is to 8 as well, so its size is rounded up to number divisible by 8,
+so a tight array of such structs will have 2nd, 3rd, etc. element properly alignment too.
+Both of these things are ensured by potentially adding padding, between members, and after last member.
+This usually is not a problem, but for some structs (<code>struct Table</code> in Lua 5.1) it can lead to
+a situation where just changing members order will lower the table size.</p>
+
+<p>You can read more and see examples on a <a href="https://stackoverflow.com/a/69898351">Stack Overflow answer about padding</a>.</p>
+
+<h1>The fix for Lua 5.1, same as Lua 5.2+ already has</h1>
+
+<p>The need for padding can be removed, by moving the 4 byte int sizearray into space taken by padding1,
+which also removes padding2, since now the struct is 56 bytes, which is divisible by 8, and not
+60, which must be padded to 64.</p>
+
+<p>Such fix has already been done for Lua 5.2 (and above) by Lua team:
+<a href="https://github.com/lua/lua/commit/77e7ebca0ab70a7ff00179099a0383314420b2af#diff-a71aa75c20a11677951d73e7d6836e4333e163aa8e4db23976965aa6feeb4945R462-R471">GitHub Lua repo mirror Table alignment fix commit</a>.</p>
+
+<pre><code>
+typedef struct Table {
+  CommonHeader;
+  lu_byte flags;  /* 1&lt;&lt;p means tagmethod(p) is not present */
+  lu_byte lsizenode;  /* log2 of size of `node' array */
+  int sizearray;  /* size of `array' array */
+  struct Table *metatable;
+  TValue *array;  /* array part */
+  Node *node;
+  Node *lastfree;  /* any free position is before this position */
+  GCObject *gclist;
+} Table;
+</code></pre>
+
+<h1>Testing memory usage of tables</h1>
+
+<p>We can check the results with a simple Lua script, allocating a table of million bool
+elements (so the array is pre-allocated later and counted in our memory usage),
+stopping the GC (so nothing is freed during our test), and replacing the bools
+with empty tables:</p>
+
+<pre><code>
+local count, tab = 10^6, {}
+for i=1,count do tab[i] = true end
+
+local startmem = collectgarbage 'count'
+collectgarbage 'stop'
+for i=1,count do tab[i] = {} end
+local growth = collectgarbage 'count' - startmem
+
+local pertab = (1024.0 * growth) / count
+local a, b, c, d = math.floor(growth), count, math.floor(pertab), select(1, ...)
+print(("%d KiB for %d tables %d bytes per table in %s"):format(a, b, c, d))
+</code></pre>
+
+<p>With a bash one liner, we can run it (assuming we have all needed Luas) like:</p>
+
+<pre><code>
+for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0-beta/src/lua
+do
+    "$exe" testtabsize.lua "$exe"
+done
+</code></pre>
+
+<p>I've included LuaJIT and Beta of Lua 5.5 (that has some interesting table changes) for comparison.
+All the Luas are 64-bit.</p>
+
+<pre><code>
+62500 KiB for 1000000 tables 64 bytes per table in lua51
+54687 KiB for 1000000 tables 56 bytes per table in ./lua-5.1.5/src/lua
+54687 KiB for 1000000 tables 56 bytes per table in lua52
+54687 KiB for 1000000 tables 56 bytes per table in lua53
+54687 KiB for 1000000 tables 56 bytes per table in lua54
+31250 KiB for 1000000 tables 32 bytes per table in luajit
+46875 KiB for 1000000 tables 48 bytes per table in ./lua-5.5.0-beta/src/lua
+</code></pre>
+
+<p>LuaJIT despite being 64-bit has an option on x64 (<code>XCFLAGS=-DLUAJIT_DISABLE_GC64</code>) to use 32-bit 'pseudo'
+pointers, which results in such a small table struct.</p>
+
+<p>Lua 5.1 takes 64 bytes, and with our fix 56, just like Luas 5.2, 5.3 and 5.4 do.</p>
+
+<p>Lua 5.5 beta gets rids of the <code>lastfree</code> pointer, resulting in 48 bytes (instead of 56).
+It also has some other interesting optimizations for array part of the table.</p>
+
+<h1>Other interesting table changes in Lua 5.5 beta</h1>
+
+<p>Lua 5.5 beta also introduces a split design for the array part of the table, to make
+values stored in it smaller (normally they are value itself - 8 bytes for double, pointer, etc. plus
+8 bytes for 1 byte type tag, due to padding, losing whole 7 bytes per array element).</p>
+
+<p>We can modify our test script to put just values into the array:</p>
+
+<pre><code>
+local count, tab = 10^6, {}
+
+local startmem = collectgarbage 'count'
+collectgarbage 'stop'
+for i=1,count do tab[i] = true end
+local growth = collectgarbage 'count' - startmem
+
+local peritem = (1024.0 * growth) / count
+local a, b, c, d = math.floor(growth), count, math.floor(peritem), select(1, ...)
+print(("%d KiB for %d tables %d bytes per table in %s"):format(a, b, c, d))
+</code></pre>
+
+<pre><code>
+for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0-beta/src/lua
+do
+    "$exe" testarr.lua "$exe"
+done
+</code></pre>
+
+<p>And see per-item in array part memory usage, again in 64-bit builds:</p>
+
+<pre><code>
+16384 KiB for 1000000 tables 16 bytes per table in lua51
+16384 KiB for 1000000 tables 16 bytes per table in ./lua-5.1.5/src/lua
+16384 KiB for 1000000 tables 16 bytes per table in lua52
+16384 KiB for 1000000 tables 16 bytes per table in lua53
+16384 KiB for 1000000 tables 16 bytes per table in lua54
+8193 KiB for 1000000 tables 8 bytes per table in luajit
+9216 KiB for 1000000 tables 9 bytes per table in ./lua-5.5.0-beta/src/lua
+</code></pre>
+
+<p>PUC Lua has 16 bytes per value, LuaJIT has 8, due to usage of NaN tagging, using the bit structure of a double,
+to stuff data (pointers, bools, etc.) into the unused space when the value is a NaN
+(<a href="http://lua-users.org/lists/lua-l/2009-11/msg00089.html">as described by Mike Pall himself</a>) and Lua 5.5 due to new optimization has 9 bytes, 1 for type tag, and 8 for value itself.</p>
+
+</body>
+</html>

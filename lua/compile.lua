@@ -7,6 +7,7 @@ local table, io = require 'table', require 'io'
 
 local inputmds = {
     'newproxy.md',
+    'smallertable51.md',
     -- add new posts at the end
 }
 
