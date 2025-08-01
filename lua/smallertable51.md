@@ -166,7 +166,7 @@ local growth = collectgarbage 'count' - startmem
 
 local peritem = (1024.0 * growth) / count
 local a, b, c, d = math.floor(growth), count, math.floor(peritem), select(1, ...)
-print(("%d KiB for %d tables %d bytes per table in %s"):format(a, b, c, d))
+print(("%d KiB for %d values %d bytes per value in %s"):format(a, b, c, d))
 ```
 
 ```
@@ -179,15 +179,15 @@ done
 And see per-item in array part memory usage, again in 64-bit builds:
 
 ```
-16384 KiB for 1000000 tables 16 bytes per table in lua51
-16384 KiB for 1000000 tables 16 bytes per table in ./lua-5.1.5/src/lua
-16384 KiB for 1000000 tables 16 bytes per table in lua52
-16384 KiB for 1000000 tables 16 bytes per table in lua53
-16384 KiB for 1000000 tables 16 bytes per table in lua54
-8193 KiB for 1000000 tables 8 bytes per table in luajit
-9216 KiB for 1000000 tables 9 bytes per table in ./lua-5.5.0-beta/src/lua
+16384 KiB for 1000000 values 16 bytes per value in lua51
+16384 KiB for 1000000 values 16 bytes per value in ./lua-5.1.5/src/lua
+16384 KiB for 1000000 values 16 bytes per value in lua52
+16384 KiB for 1000000 values 16 bytes per value in lua53
+16384 KiB for 1000000 values 16 bytes per value in lua54
+8193 KiB for 1000000 values 8 bytes per value in luajit
+9216 KiB for 1000000 values 9 bytes per value in ./lua-5.5.0-beta/src/lua
 ```
 
 PUC Lua has 16 bytes per value, LuaJIT has 8, due to usage of NaN tagging, using the bit structure of a double,
 to stuff data (pointers, bools, etc.) into the unused space when the value is a NaN
-([as described by Mike Pall himself](http://lua-users.org/lists/lua-l/2009-11/msg00089.html)) and Lua 5.5 due to new optimization has 9 bytes, 1 for type tag, and 8 for value itself.
+([as described by Mike Pall himself](http://lua-users.org/lists/lua-l/2009-11/msg00089.html)) and Lua 5.5 due to new optimization has 9 bytes, 1 for type tag, and 8 for value itself, but unlike LuaJIT's approach, the Lua 5.5 requires accessing two different far away parts in memory, which is worse for cache locality.
