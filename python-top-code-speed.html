@@ -45,21 +45,21 @@ code {
 <body>
 <div id="mainblock">
 <p><a href="index.html" title="back to Index | frex.github.io">Back to Index | frex.github.io</a>. 
-<a href="https://github.com/FRex/frex.github.io/blob/main/python-top-code-speed.html">Generated</a> from <a href="https://github.com/FRex/frex.github.io/blob/main/python-top-code-speed.md">python-top-code-speed.md</a> using <a href="https://github.com/FRex/frex.github.io/blob/main/makearticle.py">makearticle.py</a> on 2023-10-17 18:00.</p>
-<h1>Did you know top level Python code runs slower than functions?</h1>
+<a href="https://github.com/FRex/frex.github.io/blob/main/python-top-code-speed.html">Generated</a> from <a href="https://github.com/FRex/frex.github.io/blob/main/python-top-code-speed.md">python-top-code-speed.md</a> using <a href="https://github.com/FRex/frex.github.io/blob/main/makearticle.py">makearticle.py</a> on 2025-12-18 03:14.</p>
+<h1>Did you know top-level Python code runs slower than functions?</h1>
 
-<h2>Quick version</h2>
+<h2>Quick Version</h2>
 
 <p>If you're in a hurry or not that interested in the longer explanation and examples:</p>
 
 <ol>
 <li>Locals are looked up by index in an array.</li>
-<li>Globals are looked up by name in a hashtable.</li>
+<li>Globals are looked up by name in a hash table.</li>
 <li>In top-level code every variable that'd be local is instead global.</li>
 <li>This is only a visible performance issue in case of heavy processing done in to-level code.</li>
 </ol>
 
-<p>That's it. Also: in Lua, the whole source file is an implicit function so this problem doesn't happen.</p>
+<p>That's it. Also, in Lua, the whole source file is an implicit function, so this problem doesn't happen.</p>
 
 <p>Extra notes to keep in mind as of October 2023:</p>
 
@@ -68,7 +68,7 @@ code {
 <li>I ran into another article explaining this: <a href="https://stackabuse.com/why-does-python-code-run-faster-in-a-function/" title="Why does Python Code Run Faster in a Function? on stackabuse.com">stackabuse.com article: Why does Python Code Run Faster in a Function?</a>.</li>
 </ol>
 
-<h2>Onto the full story</h2>
+<h2>Onto the Full Story</h2>
 
 <p>It might sound surprising coming from compiled languages and even from some other
 interpreted languages, but it's true, <a href="https://docs.python.org/3/library/__main__.html" title="Python 3 Docs">top-level code</a>
@@ -77,9 +77,9 @@ in Python is slower than code inside functions.</p>
 <p>Let's first confirm it happens, and then explain why. Let's run this bit of code.</p>
 
 <div class="highlight">
-<pre><span></span><code><span class="kn">import</span> <span class="nn">time</span>
+<pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
-<span class="k">def</span> <span class="nf">f</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">f</span><span class="p">():</span>
  <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="mi">7</span><span class="p">):</span>
   <span class="n">s</span> <span class="o">+=</span> <span class="n">i</span>
@@ -107,12 +107,12 @@ in Python is slower than code inside functions.</p>
 increasing the limit to <code>10 ** 8</code>), but it's clear that a simple loop that just accumulates numbers
 runs 50-100% slower if it's at the top-level compared to a function. Now onto the explanation.</p>
 
-<h2>But why?</h2>
+<h2>But Why?</h2>
 
 <p>The Python docs about <a href="https://docs.python.org/3/library/__main__.html" title="Python 3 Docs">top-level code</a>
-actually contain a hint as for why this happens (globals), but don't mention the potential rare performance issue.</p>
+actually contain a hint as to why this happens (globals), but don't mention the potential rare performance issue.</p>
 
-<p>Let's see the bytecode, maybe some differences stand out.</p>
+<p>Let's see the bytecode, maybe some differences will stand out.</p>
 
 <div class="highlight">
 <pre><span></span><code>$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>dis<span class="w"> </span>code.py
@@ -169,7 +169,7 @@ Disassembly<span class="w"> </span>of<span class="w"> </span>&lt;code<span class
 globals (for the module this code.py file represents). Accessing a local is
 much easier from Python interpreter's point of view.</p>
 
-<h2>But why, in C?</h2>
+<h2>But Why, in C?</h2>
 
 <p>If we download <a href="https://www.python.org/downloads/source/" title="python source link">Python interpreter's source code</a>
 and take a peek in Python/ceval.c file, we can quickly see why local variables work faster than global ones.</p>
@@ -228,9 +228,9 @@ top-level and function run time equivalent).</p>
 <h2>Conclusion</h2>
 
 <p>This is a very niche but interesting issue. Usually it's not a performance problem, except
-in a very specific case where there are many lines of code at the top level that do a lot of work.</p>
+in a very specific case where there are many lines of code at the top-level that do a lot of work.</p>
 
-<p>For example I first ran into this when processing a multi million line text file, line by line, splitting
+<p>For example I first ran into this when processing a multimillion line text file, line by line, splitting
 them with <code>.split()</code> then doing various operations on parts, putting some statistics into a dict, etc.</p>
 
 <p>All this really added up and when I moved all the code into a single main function the runtime went down by
@@ -240,25 +240,25 @@ a third, which in my case shaved off 10-20 seconds.</p>
 you could call a function in the loop body that changes the globals, so every load and store of them must
 be preserved in the generated code.</p>
 
-<h2>Lua, for comparison</h2>
+<h2>Lua, for Comparison</h2>
 
 <p>While this issue might be obvious to a Python programmer and an obvious downside of interpreted languages,
 not all of them exhibit it, for example - Lua.</p>
 
 <div class="highlight">
-<pre><span></span><code><span class="kd">local</span> <span class="kr">function</span> <span class="nf">f</span><span class="p">()</span>
- <span class="kd">local</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
- <span class="kr">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="o">*</span><span class="mi">10</span><span class="o">^</span><span class="mi">9</span> <span class="kr">do</span> <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="n">i</span> <span class="kr">end</span>
+<pre><span></span><code><span class="kd">local</span><span class="w"> </span><span class="kr">function</span><span class="w"> </span><span class="nf">f</span><span class="p">()</span>
+<span class="w"> </span><span class="kd">local</span><span class="w"> </span><span class="nv">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="w"> </span><span class="kr">for</span><span class="w"> </span><span class="nv">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="o">*</span><span class="mi">10</span><span class="o">^</span><span class="mi">9</span><span class="w"> </span><span class="kr">do</span><span class="w"> </span><span class="nv">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">s</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="kr">end</span>
 <span class="kr">end</span>
 
-<span class="kd">local</span> <span class="n">a</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
-<span class="n">f</span><span class="p">()</span>
-<span class="kd">local</span> <span class="n">b</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
-<span class="kd">local</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="kr">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="o">*</span><span class="mi">10</span><span class="o">^</span><span class="mi">9</span> <span class="kr">do</span> <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="n">i</span> <span class="kr">end</span>
-<span class="kd">local</span> <span class="n">c</span> <span class="o">=</span> <span class="nb">os.time</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">c</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">((</span><span class="n">c</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">b</span> <span class="o">-</span> <span class="n">a</span><span class="p">))</span>
+<span class="kd">local</span><span class="w"> </span><span class="nv">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">os.time</span><span class="p">()</span>
+<span class="nf">f</span><span class="p">()</span>
+<span class="kd">local</span><span class="w"> </span><span class="nv">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">os.time</span><span class="p">()</span>
+<span class="kd">local</span><span class="w"> </span><span class="nv">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span>
+<span class="kr">for</span><span class="w"> </span><span class="nv">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="o">*</span><span class="mi">10</span><span class="o">^</span><span class="mi">9</span><span class="w"> </span><span class="kr">do</span><span class="w"> </span><span class="nv">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nv">s</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="kr">end</span>
+<span class="kd">local</span><span class="w"> </span><span class="nv">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">os.time</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="nv">c</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nv">b</span><span class="p">,</span><span class="w"> </span><span class="nv">b</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nv">a</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">((</span><span class="nv">c</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nv">b</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="nv">b</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nv">a</span><span class="p">))</span>
 </code></pre>
 </div>
 

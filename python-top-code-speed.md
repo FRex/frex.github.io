@@ -1,15 +1,15 @@
-# Did you know top level Python code runs slower than functions?
+# Did you know top-level Python code runs slower than functions?
 
-## Quick version
+## Quick Version
 
 If you're in a hurry or not that interested in the longer explanation and examples:
 
 1. Locals are looked up by index in an array.
-1. Globals are looked up by name in a hashtable.
+1. Globals are looked up by name in a hash table.
 1. In top-level code every variable that'd be local is instead global.
 1. This is only a visible performance issue in case of heavy processing done in to-level code.
 
-That's it. Also: in Lua, the whole source file is an implicit function so this problem doesn't happen.
+That's it. Also, in Lua, the whole source file is an implicit function, so this problem doesn't happen.
 
 Extra notes to keep in mind as of October 2023:
 
@@ -17,7 +17,7 @@ Extra notes to keep in mind as of October 2023:
 1. I ran into another article explaining this: [stackabuse.com article: Why does Python Code Run Faster in a Function?](https://stackabuse.com/why-does-python-code-run-faster-in-a-function/ "Why does Python Code Run Faster in a Function? on stackabuse.com").
 
 
-## Onto the full story
+## Onto the Full Story
 
 It might sound surprising coming from compiled languages and even from some other
 interpreted languages, but it's true, [top-level code](https://docs.python.org/3/library/__main__.html "Python 3 Docs")
@@ -55,12 +55,12 @@ increasing the limit to `10 ** 8`), but it's clear that a simple loop that just 
 runs 50-100% slower if it's at the top-level compared to a function. Now onto the explanation.
 
 
-## But why?
+## But Why?
 
 The Python docs about [top-level code](https://docs.python.org/3/library/__main__.html "Python 3 Docs")
-actually contain a hint as for why this happens (globals), but don't mention the potential rare performance issue.
+actually contain a hint as to why this happens (globals), but don't mention the potential rare performance issue.
 
-Let's see the bytecode, maybe some differences stand out.
+Let's see the bytecode, maybe some differences will stand out.
 
 ```bash
 $ python3 -m dis code.py
@@ -117,7 +117,7 @@ globals (for the module this code.py file represents). Accessing a local is
 much easier from Python interpreter's point of view.
 
 
-## But why, in C?
+## But Why, in C?
 
 If we download [Python interpreter's source code](https://www.python.org/downloads/source/ "python source link")
 and take a peek in Python/ceval.c file, we can quickly see why local variables work faster than global ones.
@@ -174,9 +174,9 @@ top-level and function run time equivalent).
 ## Conclusion
 
 This is a very niche but interesting issue. Usually it's not a performance problem, except
-in a very specific case where there are many lines of code at the top level that do a lot of work.
+in a very specific case where there are many lines of code at the top-level that do a lot of work.
 
-For example I first ran into this when processing a multi million line text file, line by line, splitting
+For example I first ran into this when processing a multimillion line text file, line by line, splitting
 them with `.split()` then doing various operations on parts, putting some statistics into a dict, etc.
 
 All this really added up and when I moved all the code into a single main function the runtime went down by
@@ -187,7 +187,7 @@ you could call a function in the loop body that changes the globals, so every lo
 be preserved in the generated code.
 
 
-## Lua, for comparison
+## Lua, for Comparison
 While this issue might be obvious to a Python programmer and an obvious downside of interpreted languages,
 not all of them exhibit it, for example - Lua.
 
