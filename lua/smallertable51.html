@@ -124,13 +124,13 @@ print(("%d KiB for %d tables %d bytes per table in %s"):format(a, b, c, d))
 <p>With a bash one liner, we can run it (assuming we have all needed Luas) like:</p>
 
 <pre><code>
-for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0-beta/src/lua
+for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0/src/lua
 do
     "$exe" testtabsize.lua "$exe"
 done
 </code></pre>
 
-<p>I've included LuaJIT and Beta of Lua 5.5 (that has some interesting table changes) for comparison.
+<p>I've included LuaJIT and Lua 5.5 (that has some interesting table changes) for comparison.
 All the Luas are 64-bit.</p>
 
 <pre><code>
@@ -140,7 +140,7 @@ All the Luas are 64-bit.</p>
 54687 KiB for 1000000 tables 56 bytes per table in lua53
 54687 KiB for 1000000 tables 56 bytes per table in lua54
 31250 KiB for 1000000 tables 32 bytes per table in luajit
-46875 KiB for 1000000 tables 48 bytes per table in ./lua-5.5.0-beta/src/lua
+46875 KiB for 1000000 tables 48 bytes per table in ./lua-5.5.0/src/lua
 </code></pre>
 
 <p>LuaJIT despite being 64-bit has an option on x64 (<code>XCFLAGS=-DLUAJIT_DISABLE_GC64</code>) to use 32-bit 'pseudo'
@@ -148,14 +148,25 @@ pointers, which results in such a small table struct.</p>
 
 <p>Lua 5.1 takes 64 bytes, and with our fix 56, just like Luas 5.2, 5.3 and 5.4 do.</p>
 
-<p>Lua 5.5 beta gets rids of the <code>lastfree</code> pointer, resulting in 48 bytes (instead of 56).
+<p>Lua 5.5 gets rids of the <code>lastfree</code> pointer, resulting in 48 bytes (instead of 56).
 It also has some other interesting optimizations for array part of the table.</p>
 
-<h1>Other interesting table changes in Lua 5.5 beta</h1>
+<h1>Other interesting table changes in Lua 5.5</h1>
 
-<p>Lua 5.5 beta also introduces a split design for the array part of the table, to make
+<p>Lua 5.5 also introduces a split design for the array part of the table, to make
 values stored in it smaller (normally they are value itself - 8 bytes for double, pointer, etc. plus
 8 bytes for 1 byte type tag, due to padding, losing whole 7 bytes per array element).</p>
+
+<p>The exact layout is described in <a href="https://www.lua.org/source/5.5/ltable.h.html#HFIRSTNODE">5.5/ltable.h in a comment under #define HFIRSTNODE</a>.</p>
+
+<p><a href="https://www.lua.org/manual/5.5/readme.html#changes">The Lua 5.5 release notes</a> mention this as
+"more compact arrays (large arrays use about 60% less memory)" which seems to be a typo
+since arrays take 60% <strong>of</strong> previous space (9 bytes per element, instead of 16, so ~57%),
+not 60% <strong>less</strong> space, it's actually 40% (7/16 so ~43%) less space.</p>
+
+<p>I've asked about this typo on
+<a href="https://groups.google.com/g/lua-l/c/jW6vCnhVy_s/m/6nt3yXHLCwAJ">the mailing list thread for "Lua 5.5.0 now available"</a>
+but got no reply so far.</p>
 
 <p>We can modify our test script to put just values into the array:</p>
 
@@ -173,7 +184,7 @@ print(("%d KiB for %d values %d bytes per value in %s"):format(a, b, c, d))
 </code></pre>
 
 <pre><code>
-for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0-beta/src/lua
+for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0/src/lua
 do
     "$exe" testarr.lua "$exe"
 done
@@ -188,7 +199,7 @@ done
 16384 KiB for 1000000 values 16 bytes per value in lua53
 16384 KiB for 1000000 values 16 bytes per value in lua54
 8193 KiB for 1000000 values 8 bytes per value in luajit
-9216 KiB for 1000000 values 9 bytes per value in ./lua-5.5.0-beta/src/lua
+9216 KiB for 1000000 values 9 bytes per value in ./lua-5.5.0/src/lua
 </code></pre>
 
 <p>PUC Lua has 16 bytes per value, LuaJIT has 8, due to usage of NaN tagging, using the bit structure of a double,

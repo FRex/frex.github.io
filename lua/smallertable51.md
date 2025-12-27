@@ -154,6 +154,17 @@ Lua 5.5 also introduces a split design for the array part of the table, to make
 values stored in it smaller (normally they are value itself - 8 bytes for double, pointer, etc. plus
 8 bytes for 1 byte type tag, due to padding, losing whole 7 bytes per array element).
 
+The exact layout is described in [5.5/ltable.h in a comment under #define HFIRSTNODE](https://www.lua.org/source/5.5/ltable.h.html#HFIRSTNODE).
+
+[The Lua 5.5 release notes](https://www.lua.org/manual/5.5/readme.html#changes) mention this as
+"more compact arrays (large arrays use about 60% less memory)" which seems to be a typo
+since arrays take 60% **of** previous space (9 bytes per element, instead of 16, so ~57%),
+not 60% **less** space, it's actually 40% (7/16 so ~43%) less space.
+
+I've asked about this typo on
+[the mailing list thread for "Lua 5.5.0 now available"](https://groups.google.com/g/lua-l/c/jW6vCnhVy_s/m/6nt3yXHLCwAJ)
+but got no reply so far.
+
 We can modify our test script to put just values into the array:
 
 ```
