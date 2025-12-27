@@ -120,13 +120,13 @@ print(("%d KiB for %d tables %d bytes per table in %s"):format(a, b, c, d))
 With a bash one liner, we can run it (assuming we have all needed Luas) like:
 
 ```
-for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0-beta/src/lua
+for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0/src/lua
 do
     "$exe" testtabsize.lua "$exe"
 done
 ```
 
-I've included LuaJIT and Beta of Lua 5.5 (that has some interesting table changes) for comparison.
+I've included LuaJIT and Lua 5.5 (that has some interesting table changes) for comparison.
 All the Luas are 64-bit.
 
 ```
@@ -136,7 +136,7 @@ All the Luas are 64-bit.
 54687 KiB for 1000000 tables 56 bytes per table in lua53
 54687 KiB for 1000000 tables 56 bytes per table in lua54
 31250 KiB for 1000000 tables 32 bytes per table in luajit
-46875 KiB for 1000000 tables 48 bytes per table in ./lua-5.5.0-beta/src/lua
+46875 KiB for 1000000 tables 48 bytes per table in ./lua-5.5.0/src/lua
 ```
 
 LuaJIT despite being 64-bit has an option on x64 (`XCFLAGS=-DLUAJIT_DISABLE_GC64`) to use 32-bit 'pseudo'
@@ -144,13 +144,13 @@ pointers, which results in such a small table struct.
 
 Lua 5.1 takes 64 bytes, and with our fix 56, just like Luas 5.2, 5.3 and 5.4 do.
 
-Lua 5.5 beta gets rids of the `lastfree` pointer, resulting in 48 bytes (instead of 56).
+Lua 5.5 gets rids of the `lastfree` pointer, resulting in 48 bytes (instead of 56).
 It also has some other interesting optimizations for array part of the table.
 
 
-# Other interesting table changes in Lua 5.5 beta
+# Other interesting table changes in Lua 5.5
 
-Lua 5.5 beta also introduces a split design for the array part of the table, to make
+Lua 5.5 also introduces a split design for the array part of the table, to make
 values stored in it smaller (normally they are value itself - 8 bytes for double, pointer, etc. plus
 8 bytes for 1 byte type tag, due to padding, losing whole 7 bytes per array element).
 
@@ -170,7 +170,7 @@ print(("%d KiB for %d values %d bytes per value in %s"):format(a, b, c, d))
 ```
 
 ```
-for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0-beta/src/lua
+for exe in lua51 ./lua-5.1.5/src/lua lua52 lua53 lua54 luajit ./lua-5.5.0/src/lua
 do
     "$exe" testarr.lua "$exe"
 done
@@ -185,7 +185,7 @@ And see per-item in array part memory usage, again in 64-bit builds:
 16384 KiB for 1000000 values 16 bytes per value in lua53
 16384 KiB for 1000000 values 16 bytes per value in lua54
 8193 KiB for 1000000 values 8 bytes per value in luajit
-9216 KiB for 1000000 values 9 bytes per value in ./lua-5.5.0-beta/src/lua
+9216 KiB for 1000000 values 9 bytes per value in ./lua-5.5.0/src/lua
 ```
 
 PUC Lua has 16 bytes per value, LuaJIT has 8, due to usage of NaN tagging, using the bit structure of a double,
