@@ -7,7 +7,7 @@ def make_link_to_repo(fname: str, display: str = None) -> str:
     if display is None:
         display = fname
     # NOTE: unsafe, doesn't escape HTML special chars
-    return f"""<a href="https://github.com/FRex/frex.github.io/blob/main/{fname}">{display}</a>"""
+    return f"""<a href="https://github.com/FRex/frex.github.io/blob/main/article/{fname}">{display}</a>"""
 
 
 def make_article(fname: str, title: str, desc: str):

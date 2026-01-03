@@ -254,4 +254,4 @@ function <code.lua:1,4> (8 instructions, 32 bytes at 00502268)
 ```
 
 
-[No matter if you ran through this article in top-level or a function, you can now quickly go back to: Index | frex.github.io](index.html "back to Index | frex.github.io").
+[No matter if you ran through this article in top-level or a function, you can now quickly go back to: Index | frex.github.io](../index.html "back to Index | frex.github.io").
